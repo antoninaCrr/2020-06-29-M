@@ -5,9 +5,13 @@
 package it.polito.tdp.imdb;
 
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.ResourceBundle;
 
+import it.polito.tdp.imdb.model.Director;
 import it.polito.tdp.imdb.model.Model;
+import it.polito.tdp.imdb.model.Neighbour;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -35,10 +39,10 @@ public class FXMLController {
     private Button btnCercaAffini; // Value injected by FXMLLoader
 
     @FXML // fx:id="boxAnno"
-    private ComboBox<?> boxAnno; // Value injected by FXMLLoader
+    private ComboBox<Integer> boxAnno; // Value injected by FXMLLoader
 
     @FXML // fx:id="boxRegista"
-    private ComboBox<?> boxRegista; // Value injected by FXMLLoader
+    private ComboBox<Director> boxRegista; // Value injected by FXMLLoader
 
     @FXML // fx:id="txtAttoriCondivisi"
     private TextField txtAttoriCondivisi; // Value injected by FXMLLoader
@@ -48,16 +52,75 @@ public class FXMLController {
 
     @FXML
     void doCreaGrafo(ActionEvent event) {
-
+    	this.boxRegista.getItems().clear();
+    	this.txtResult.clear();
+    	
+    	Integer anno = this.boxAnno.getValue();
+    	
+    	if(anno == null) {
+    		this.txtResult.appendText("Devi selezionare un anno\n");
+    		return;
+    	}
+    	
+    	this.model.creaGrafo(anno);
+    	
+    	this.txtResult.appendText("GRAFO CREATO\n");
+    	this.txtResult.appendText("#VERTICI: "+this.model.nVertici()+"\n");
+    	this.txtResult.appendText("#ARCHI: "+this.model.nArchi()+"\n");
+    	
+    	this.boxRegista.getItems().addAll(this.model.getAllVertices());
+    
     }
 
     @FXML
     void doRegistiAdiacenti(ActionEvent event) {
+    	this.txtResult.clear();
+    	
+    	Director d = this.boxRegista.getValue();
+    	
+    	if(d == null) {
+    		this.txtResult.appendText("Devi selezionare un regista\n");
+    		return;
+    	}
+    	
+    	List<Neighbour> vicini = new ArrayList<Neighbour>(this.model.getAllNeighbours(d));
+    	
+    	this.txtResult.appendText("REGISTI ADIACENTI A: "+d.getId()+"-"+d.getFirstName()+" "+d.getLastName()+"\n");
+    	
+    	for(Neighbour ni : vicini) {
+    		this.txtResult.appendText(ni.toString()+"\n");
+    	}
 
     }
 
     @FXML
     void doRicorsione(ActionEvent event) {
+    	this.txtResult.clear();
+    	String num = this.txtAttoriCondivisi.getText();
+    	int soglia;
+   
+    	try {
+    		soglia = Integer.parseInt(num);
+    	}catch(NumberFormatException e) {
+    		this.txtResult.appendText("Inserire un valore soglia numerico\n");
+    		return;
+    	}
+    	
+        Director d = this.boxRegista.getValue();
+    	
+    	if(d == null) {
+    		this.txtResult.appendText("Devi selezionare un regista\n");
+    		return;
+    	}
+    	
+    	
+    	List<Director> direttoriCercati = model.startRicorsione(d, soglia);
+    	
+    	for(Director di : direttoriCercati) {
+    		this.txtResult.appendText(di.toString()+"\n");
+    	}
+    	this.txtResult.appendText("Num tot attori condivisi: "+model.sommaPeso(direttoriCercati));
+    	
 
     }
 
@@ -76,6 +139,10 @@ public class FXMLController {
    public void setModel(Model model) {
     	
     	this.model = model;
+    	
+    	for(int anno = 2004; anno <= 2006; anno++) {
+    		this.boxAnno.getItems().add(anno);
+    	}
     	
     }
     
